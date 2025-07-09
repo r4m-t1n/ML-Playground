@@ -1,8 +1,29 @@
-<html>
-    <head>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ML Playground</title>
+    <link rel="stylesheet" href="/static/css/dashboard.css">
+</head>
+<body>
+    <header>
+        <h1>ML Playground</h1>
+    </header>
 
-    </head>
-    <body>
-        
-    </body>
+    <main>
+        <div class="tabs">
+            <button class="tab-button active" data-model="linear-regression">Linear Regression</button>
+            <button class="tab-button" data-model="simple-classifier">Simple Classifier</button>
+            <button class="tab-button" data-model="mlp-regression">MLP Regression</button>
+            </div>
+
+        <div id="model-content" class="model-content">
+            <h2>Welcome to ML Playground!</h2>
+            <p>Select a machine learning model from the tabs above to explore its functionality. You can input your own data, adjust hyperparameters, and visualize the training process and results.</p>
+        </div>
+    </main>
+
+    <script src="/static/js/dashboard.js"></script>
+</body>
 </html>
