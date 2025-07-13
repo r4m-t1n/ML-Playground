@@ -47,6 +47,8 @@ class TrainRequestClassifier(BaseModel):
     learning_rate: float
     epochs: int
 
+class PredictRequestMLP(BaseModel):
+    inputs: list[float]
 
 @app.get("/", response_class=HTMLResponse)
 async def root(request: Request):
@@ -133,7 +135,7 @@ async def train_simple_classifier(request: TrainRequestClassifier):
             model, optimizer, criterion,
             request.epochs
         )
-        
+
         models["simple-classifier"] = model
 
         weights = model.linear.weight.tolist()[0]
@@ -145,7 +147,30 @@ async def train_simple_classifier(request: TrainRequestClassifier):
             "final_loss": final_loss, "weights": weights, "bias": bias},
             status_code=200
         )
-            
+
+    except Exception as e:
+        return JSONResponse(
+            content="ERROR: " + str(e),
+            status_code=500
+        )
+
+@app.post("/predict_mlp_regression")
+async def predict_mlp_regression_endpoint(request_body: PredictRequestMLP):
+    try:
+        model = models["mlp-regression"]
+        if not isinstance(model, MLPRegression):
+            raise ValueError("MLP model not yet trained or not loaded correctly.")
+
+        model.eval()
+        with torch.no_grad():
+            x_inputs = torch.tensor([[x_val] for x_val in request_body.inputs], dtype=torch.float32)
+            predictions = model(x_inputs).squeeze().tolist()
+
+        return JSONResponse(
+            content=
+            {"predictions": predictions},
+            status_code=200
+        )
     except Exception as e:
         return JSONResponse(
             content="ERROR: " + str(e),
