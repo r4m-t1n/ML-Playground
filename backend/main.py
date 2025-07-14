@@ -17,7 +17,7 @@ templates = Jinja2Templates(directory="../frontend/templates")
 app.mount("/static", StaticFiles(directory="../frontend/static"), name="static")
 
 models = {
-    "linear-regression": SimpleLinearRegression(),
+    "simple-linear-regression": SimpleLinearRegression(),
     "simple-classifier": SimpleClassifier(),
     "mlp-regression": MLPRegression(),
 }
@@ -56,7 +56,7 @@ async def root(request: Request):
         "index.html", {"request": request}
     )
 
-app.post("/train_simple_linear_regression")
+@app.post("/train_simple_linear_regression")
 async def train_simple_linear_regression(request: TrainRequestLR):
     try:
         x_data = torch.tensor([[i.x] for i in request.data], dtype=torch.float32)
@@ -84,19 +84,20 @@ async def train_simple_linear_regression(request: TrainRequestLR):
             status_code=200
         )
     except Exception as e:
+        print(str(e))
         return JSONResponse(
-            content="ERROR: " + str(e),
+            content={"error": + str(e)},
             status_code=500
         )
 
 
-app.post("/train_mlp_regression")
+@app.post("/train_mlp_regression")
 async def train_mlp_regression(request: TrainRequestMLP):
     try:
         x_data = torch.tensor([[i.x] for i in request.data], dtype=torch.float32)
         y_data = torch.tensor([[i.y] for i in request.data], dtype=torch.float32)
 
-        model = MLPRegression(input_size=1, hidden_size=request.hidden_size, output_size=1)
+        model = MLPRegression(input_f=1, hidden_size=request.hidden_size, output_f=1)
         optimizer = optim.Adam(model.parameters(), lr=request.learning_rate)
         criterion = nn.MSELoss()
 
@@ -116,11 +117,11 @@ async def train_mlp_regression(request: TrainRequestMLP):
         )
     except Exception as e:
         return JSONResponse(
-            content="ERROR: " + str(e),
+            content={"error": + str(e)},
             status_code=500
         )
 
-app.post("/train_simple_classifier")
+@app.post("/train_simple_classifier")
 async def train_simple_classifier(request: TrainRequestClassifier):
     try:
         x_data = torch.tensor([[i.x, i.y] for i in request.data], dtype=torch.float32)
@@ -150,7 +151,7 @@ async def train_simple_classifier(request: TrainRequestClassifier):
 
     except Exception as e:
         return JSONResponse(
-            content="ERROR: " + str(e),
+            content={"error": + str(e)},
             status_code=500
         )
 
@@ -173,6 +174,6 @@ async def predict_mlp_regression_endpoint(request_body: PredictRequestMLP):
         )
     except Exception as e:
         return JSONResponse(
-            content="ERROR: " + str(e),
+            content={"error": + str(e)},
             status_code=500
         )
