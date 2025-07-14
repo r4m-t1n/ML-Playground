@@ -53,3 +53,72 @@ main {
     flex-direction: column;
     gap: 20px;
 }
+.model-section {
+    display: flex;
+    gap: 20px;
+}
+.chart-container {
+    flex: 2;
+    position: relative;
+    height: 300px;
+}
+.controls-container {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    padding: 10px;
+    border-left: 1px solid #eee;
+}
+.control-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+}
+.slider-container {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.slider-container input[type="range"] {
+    flex-grow: 1;
+}
+.button-group {
+    display: flex;
+    gap: 10px;
+    margin-top: 15px;
+}
+.button-group button {
+    padding: 10px 15px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 1rem;
+}
+.button-group button:hover {
+    background-color: #0056b3;
+}
+.data-input-group textarea {
+    width: 100%;
+    min-height: 80px;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-family: monospace;
+}
+.data-input-group p {
+    font-size: 0.9em;
+    color: #666;
+    margin-top: 5px;
+}
+.results-area {
+    margin-top: 20px;
+    padding-top: 15px;
+    border-top: 1px solid #eee;
+}
+.results-area h4 {
+    margin-bottom: 10px;
+    color: #555;
+}
