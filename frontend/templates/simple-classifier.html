@@ -1,0 +1,37 @@
+<h2>Simple Classifier Model</h2>
+<div class="model-section">
+    <div class="chart-container">
+        <canvas id="chart-simple-classifier"></canvas>
+    </div>
+    <div class="controls-container">
+        <h3>Parameters & Data Input</h3>
+        <div class="control-group data-input-group">
+            <label for="input-data-simple-classifier">Enter Data Points (e.g., x1,y1,label1;x2,y2,label2):</label>
+            <textarea id="input-data-simple-classifier" rows="5" placeholder="Example: 1,2,0;3,4,1;5,1,0"></textarea>
+            <p>Separate points with semicolons (;), and x,y,label values with commas (,). Label 0 or 1.</p>
+        </div>
+
+        <div class="control-group">
+            <label for="slider-simple-classifier-learning-rate">Learning Rate:</label>
+            <div class="slider-container">
+                <input type="range" id="slider-simple-classifier-learning-rate" min="0.0001" max="0.1" step="0.0001" value="0.01">
+                <span id="value-simple-classifier-learning-rate">0.01</span>
+            </div>
+        </div>
+        <div class="control-group">
+            <label for="slider-simple-classifier-epochs">Epochs:</label>
+            <div class="slider-container">
+                <input type="range" id="slider-simple-classifier-epochs" min="10" max="1000" step="10" value="100">
+                <span id="value-simple-classifier-epochs">100</span>
+            </div>
+        </div>
+        <div class="button-group">
+            <button id="button-train-simple-classifier">Train Model</button>
+            <button id="button-reset-simple-classifier">Reset Data & Model</button>
+        </div>
+        <div class="results-area">
+            <h4>Training Loss: <span id="display-simple-classifier-loss">N/A</span></h4>
+            <p>Decision Boundary Info: <span id="display-simple-classifier-boundary">N/A</span></p>
+        </div>
+    </div>
+</div>
