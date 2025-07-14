@@ -9,129 +9,9 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const modelTemplates = {
-        'simple-linear-regression': `
-            <h2>Linear Regression Model</h2>
-            <div class="model-section">
-                <div class="chart-container">
-                    <canvas id="chart-simple-linear-regression"></canvas>
-                </div>
-                <div class="controls-container">
-                    <h3>Parameters & Data Input</h3>
-                    <div class="control-group data-input-group">
-                        <label for="input-data-simple-linear-regression">Enter Data Points (e.g., x1,y1;x2,y2):</label>
-                        <textarea id="input-data-simple-linear-regression" rows="5" placeholder="Example: 1,2.5;2,4.1;3,5.8"></textarea>
-                        <p>Separate points with semicolons (;), and x,y values with commas (,).</p>
-                    </div>
-
-                    <div class="control-group">
-                        <label for="slider-lr-learning-rate">Learning Rate:</label>
-                        <div class="slider-container">
-                            <input type="range" id="slider-lr-learning-rate" min="0.0001" max="0.1" step="0.0001" value="0.01">
-                            <span id="value-lr-learning-rate">0.01</span>
-                        </div>
-                    </div>
-                    <div class="control-group">
-                        <label for="slider-lr-epochs">Epochs:</label>
-                        <div class="slider-container">
-                            <input type="range" id="slider-lr-epochs" min="10" max="1000" step="10" value="100">
-                            <span id="value-lr-epochs">100</span>
-                        </div>
-                    </div>
-                    <div class="button-group">
-                        <button id="button-train-simple-linear-regression">Train Model</button>
-                        <button id="button-reset-simple-linear-regression">Reset Data & Model</button>
-                    </div>
-                    <div class="results-area">
-                        <h4>Training Loss: <span id="display-lr-loss">N/A</span></h4>
-                        <p>Model Weights (w, b): <span id="display-lr-weights">N/A</span></p>
-                    </div>
-                </div>
-            </div>
-        `,
-        'simple-classifier': `
-            <h2>Simple Classifier Model</h2>
-            <div class="model-section">
-                <div class="chart-container">
-                    <canvas id="chart-simple-classifier"></canvas>
-                </div>
-                <div class="controls-container">
-                    <h3>Parameters & Data Input</h3>
-                    <div class="control-group data-input-group">
-                        <label for="input-data-simple-classifier">Enter Data Points (e.g., x1,y1,label1;x2,y2,label2):</label>
-                        <textarea id="input-data-simple-classifier" rows="5" placeholder="Example: 1,2,0;3,4,1;5,1,0"></textarea>
-                        <p>Separate points with semicolons (;), and x,y,label values with commas (,). Label 0 or 1.</p>
-                    </div>
-
-                    <div class="control-group">
-                        <label for="slider-cls-learning-rate">Learning Rate:</label>
-                        <div class="slider-container">
-                            <input type="range" id="slider-cls-learning-rate" min="0.0001" max="0.1" step="0.0001" value="0.01">
-                            <span id="value-cls-learning-rate">0.01</span>
-                        </div>
-                    </div>
-                    <div class="control-group">
-                        <label for="slider-cls-epochs">Epochs:</label>
-                        <div class="slider-container">
-                            <input type="range" id="slider-cls-epochs" min="10" max="1000" step="10" value="100">
-                            <span id="value-cls-epochs">100</span>
-                        </div>
-                    </div>
-                    <div class="button-group">
-                        <button id="button-train-simple-classifier">Train Model</button>
-                        <button id="button-reset-simple-classifier">Reset Data & Model</button>
-                    </div>
-                    <div class="results-area">
-                        <h4>Training Loss: <span id="display-cls-loss">N/A</span></h4>
-                        <p>Decision Boundary Info: <span id="display-cls-boundary">N/A</span></p>
-                    </div>
-                </div>
-            </div>
-        `,
-        'mlp-regression': `
-            <h2>MLP Regression Model</h2>
-            <div class="model-section">
-                <div class="chart-container">
-                    <canvas id="chart-mlp-regression"></canvas>
-                </div>
-                <div class="controls-container">
-                    <h3>Parameters & Data Input</h3>
-                    <div class="control-group data-input-group">
-                        <label for="input-data-mlp-regression">Enter Data Points (e.g., x1,y1;x2,y2):</label>
-                        <textarea id="input-data-mlp-regression" rows="5" placeholder="Example: 1,2.5;2,4.1;3,5.8"></textarea>
-                        <p>Separate points with semicolons (;), and x,y values with commas (,).</p>
-                    </div>
-
-                    <div class="control-group">
-                        <label for="slider-mlp-learning-rate">Learning Rate:</label>
-                        <div class="slider-container">
-                            <input type="range" id="slider-mlp-learning-rate" min="0.0001" max="0.1" step="0.0001" value="0.01">
-                            <span id="value-mlp-learning-rate">0.01</span>
-                        </div>
-                    </div>
-                    <div class="control-group">
-                        <label for="slider-mlp-epochs">Epochs:</label>
-                        <div class="slider-container">
-                            <input type="range" id="slider-mlp-epochs" min="10" max="1000" step="10" value="100">
-                            <span id="value-mlp-epochs">100</span>
-                        </div>
-                    </div>
-                    <div class="control-group">
-                        <label for="slider-mlp-hidden-size">Hidden Layer Size:</label>
-                        <div class="slider-container">
-                            <input type="range" id="slider-mlp-hidden-size" min="5" max="50" step="5" value="20">
-                            <span id="value-mlp-hidden-size">20</span>
-                        </div>
-                    </div>
-                    <div class="button-group">
-                        <button id="button-train-mlp-regression">Train Model</button>
-                        <button id="button-reset-mlp-regression">Reset Data & Model</button>
-                    </div>
-                     <div class="results-area">
-                        <h4>Training Loss: <span id="display-mlp-loss">N/A</span></h4>
-                    </div>
-                </div>
-            </div>
-        `
+        'simple-linear-regression': 'simple-linear-regression.html',
+        'simple-classifier': 'simple-classifier.html',
+        'mlp-regression': 'mlp-regression.html'
     };
 
     function setupSliderValueDisplay(modelName, sliderIdSuffix) {
@@ -216,13 +96,18 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         try {
-            const response = await fetch(`/train_${modelName.replace('-', '_')}`, {
+            const backendTrainEndpoint = `/train_${modelName.replace(/-/g, '_')}`; 
+            const response = await fetch(backendTrainEndpoint, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(requestBody)
             });
             const result = await response.json();
             
+            if (response.status !== 200) {
+                throw new Error(result.detail || `Backend error: Status ${response.status}`);
+            }
+
             document.getElementById(`display-${modelName}-loss`).textContent = result.final_loss.toFixed(6);
 
             const chart = modelStates[modelName].chart;
@@ -238,8 +123,10 @@ document.addEventListener('DOMContentLoaded', () => {
             if (modelName === 'simple-linear-regression') {
                 const w = result.weights[0];
                 const b = result.bias;
-                document.getElementById(`display-lr-weights`).textContent = `w=${w.toFixed(4)}, b=${b.toFixed(4)}`;
-                const lineData = [{ x: 0, y: b }, { x: 10, y: w * 10 + b }];
+                document.getElementById(`display-simple-linear-regression-weights`).textContent = `w=${w.toFixed(4)}, b=${b.toFixed(4)}`;
+                
+                const maxX = chart.options.scales.x.max;
+                const lineData = [{ x: 0, y: b }, { x: maxX, y: w * maxX + b }];
                 chart.data.datasets[1].data = lineData;
             } else if (modelName === 'simple-classifier') {
                 const w = result.weights;
@@ -265,17 +152,20 @@ document.addEventListener('DOMContentLoaded', () => {
                         boundaryEquation = "No clear boundary (weights are zero)";
                     }
                 }
-                document.getElementById(`display-cls-boundary`).textContent = boundaryEquation;
+                document.getElementById(`display-simple-classifier-boundary`).textContent = boundaryEquation;
                 chart.data.datasets[2].data = boundaryData;
 
             } else if (modelName === 'mlp-regression') {
                 const predictionInputs = Array.from({ length: 101 }, (_, i) => i * (chart.options.scales.x.max / 100));
-                const predictResponse = await fetch('/predict_mlp-regression', {
+                const predictResponse = await fetch('/predict_mlp_regression', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ inputs: predictionInputs })
                 });
                 const predictResult = await predictResponse.json();
+                if (predictResponse.status !== 200) {
+                    throw new Error(predictResult.detail || "Unknown prediction error from backend.");
+                }
 
                 const mlpLineData = predictionInputs.map((x, index) => ({
                     x: x,
@@ -287,9 +177,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
         } catch (error) {
             console.error(`Error training ${modelName} model:`, error);
+            alert(`Error during training: ${error.message}. Check console for details.`);
             document.getElementById(`display-${modelName}-loss`).textContent = 'Error';
-            if (modelName === 'simple-linear-regression') document.getElementById(`display-lr-weights`).textContent = 'Error';
-            if (modelName === 'simple-classifier') document.getElementById(`display-cls-boundary`).textContent = 'Error';
+            if (document.getElementById(`display-${modelName}-weights`)) {
+                document.getElementById(`display-${modelName}-weights`).textContent = 'Error';
+            }
+            if (document.getElementById(`display-${modelName}-boundary`)) {
+                document.getElementById(`display-${modelName}-boundary`).textContent = 'Error';
+            }
         }
     }
 
@@ -318,8 +213,12 @@ document.addEventListener('DOMContentLoaded', () => {
             chart.update();
         }
         document.getElementById(`display-${modelName}-loss`).textContent = 'N/A';
-        if (modelName === 'simple-linear-regression') document.getElementById(`display-lr-weights`).textContent = 'N/A';
-        if (modelName === 'simple-classifier') document.getElementById(`display-cls-boundary`).textContent = 'N/A';
+        if (document.getElementById(`display-${modelName}-weights`)) {
+            document.getElementById(`display-${modelName}-weights`).textContent = 'N/A';
+        }
+        if (document.getElementById(`display-${modelName}-boundary`)) {
+            document.getElementById(`display-${modelName}-boundary`).textContent = 'N/A';
+        }
     }
 
     tabButtons.forEach(button => {
@@ -329,14 +228,33 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    function activateTab(modelName) {
+    async function activateTab(modelName) {
         tabButtons.forEach(button => button.classList.remove('active'));
         const activeTabButton = document.querySelector(`.tab-button[data-model="${modelName}"]`);
         if (activeTabButton) {
             activeTabButton.classList.add('active');
         }
 
-        modelContentArea.innerHTML = modelTemplates[modelName] || '<h2>Model not found.</h2>';
+        const templateFile = modelTemplates[modelName];
+        if (!templateFile) {
+            modelContentArea.innerHTML = '<h2>Model not found.</h2>';
+            return;
+        }
+
+        try {
+            const response = await fetch(templateFile);
+            if (!response.ok) {
+                throw new Error(`Failed to load ${templateFile}. Status: ${response.status}`);
+            }
+            const htmlContent = await response.text();
+
+            modelContentArea.innerHTML = htmlContent;
+
+        } catch (error) {
+            console.error('Error fetching template:', error);
+            modelContentArea.innerHTML = `<h2>Error loading template for ${modelName}.</h2>`;
+            return; 
+        }
 
         setupSliderValueDisplay(modelName, 'learning-rate');
         setupSliderValueDisplay(modelName, 'epochs');
@@ -350,6 +268,33 @@ document.addEventListener('DOMContentLoaded', () => {
         let chartData;
         let chartOptions;
 
+        let xMin = 0, xMax = 10;
+        let yMin = 0, yMax = 10;
+        
+        const currentModelDefaultData = modelStates[modelName].defaultData;
+        const parsedDefaultData = parseDataInput(currentModelDefaultData, modelName === 'simple-classifier' ? 'classifier' : 'regression');
+        
+        if (parsedDefaultData.length > 0) {
+            const allX = parsedDefaultData.map(p => p.x);
+            const allY = parsedDefaultData.map(p => p.y);
+            
+            xMin = Math.min(...allX);
+            xMax = Math.max(...allX);
+            yMin = Math.min(...allY);
+            yMax = Math.max(...allY);
+
+            xMin = Math.floor(xMin) - 1;
+            xMax = Math.ceil(xMax) + 1;
+            yMin = Math.floor(yMin) - 1;
+            yMax = Math.ceil(yMax) + 1;
+
+            if (xMax <= xMin) xMax = xMin + 10;
+            if (yMax <= yMin) yMax = yMin + 10;
+        }
+        if (xMin > 0 && parsedDefaultData.every(p => p.x >= 0)) xMin = 0;
+        if (yMin > 0 && parsedDefaultData.every(p => p.y >= 0)) yMin = 0;
+        
+
         if (modelName === 'simple-linear-regression') {
             const parsedData = parseDataInput(dataInputElem.value, 'regression');
             modelStates[modelName].data = parsedData;
@@ -359,7 +304,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     { label: 'Regression Line', data: [], borderColor: 'red', type: 'line', fill: false, pointRadius: 0, borderWidth: 2 }
                 ]
             };
-            chartOptions = { scales: { x: { type: 'linear', position: 'bottom', min: 0, max: 10 }, y: { type: 'linear', position: 'left', min: 0, max: 10 } } };
+            chartOptions = { scales: { x: { type: 'linear', position: 'bottom', min: xMin, max: xMax }, y: { type: 'linear', position: 'left', min: yMin, max: yMax } } };
         } else if (modelName === 'simple-classifier') {
             const parsed = parseDataInput(dataInputElem.value, 'classifier');
             modelStates[modelName].data.class0 = parsed.filter(p => p.label === 0);
@@ -371,17 +316,17 @@ document.addEventListener('DOMContentLoaded', () => {
                     { label: 'Decision Boundary', data: [], borderColor: 'purple', type: 'line', fill: false, pointRadius: 0, borderWidth: 2 }
                 ]
             };
-            chartOptions = { scales: { x: { type: 'linear', position: 'bottom', min: 0, max: 10 }, y: { type: 'linear', position: 'left', min: 0, max: 10 } } };
+            chartOptions = { scales: { x: { type: 'linear', position: 'bottom', min: xMin, max: xMax }, y: { type: 'linear', position: 'left', min: yMin, max: yMax } } };
         } else if (modelName === 'mlp-regression') {
             const parsedData = parseDataInput(dataInputElem.value, 'regression');
             modelStates[modelName].data = parsedData;
-             chartData = {
+            chartData = {
                 datasets: [
                     { label: 'Data Points', data: parsedData, backgroundColor: 'rgba(75, 192, 192, 0.6)', pointRadius: 6 },
                     { label: 'MLP Prediction', data: [], borderColor: 'blue', type: 'line', fill: false, pointRadius: 0, borderWidth: 2 }
                 ]
             };
-            chartOptions = { scales: { x: { type: 'linear', position: 'bottom', min: 0, max: 10 }, y: { type: 'linear', position: 'left', min: 0, max: 10 } } };
+            chartOptions = { scales: { x: { type: 'linear', position: 'bottom', min: xMin, max: xMax }, y: { type: 'linear', position: 'left', min: yMin, max: yMax } } };
         }
 
         renderChart(`chart-${modelName}`, 'scatter', chartData, chartOptions, modelName);
@@ -408,7 +353,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     modelStates[modelName].chart.data.datasets[1].data = [];
                 }
                 if (modelStates[modelName].chart.data.datasets[2]) {
-                     modelStates[modelName].chart.data.datasets[2].data = [];
+                    modelStates[modelName].chart.data.datasets[2].data = [];
                 }
                 modelStates[modelName].chart.update();
             } catch (e) {
@@ -417,8 +362,12 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         document.getElementById(`display-${modelName}-loss`).textContent = 'N/A';
-        if (modelName === 'simple-linear-regression') document.getElementById(`display-lr-weights`).textContent = 'N/A';
-        if (modelName === 'simple-classifier') document.getElementById(`display-cls-boundary`).textContent = 'N/A';
+        if (document.getElementById(`display-${modelName}-weights`)) {
+            document.getElementById(`display-${modelName}-weights`).textContent = 'N/A';
+        }
+        if (document.getElementById(`display-${modelName}-boundary`)) {
+            document.getElementById(`display-${modelName}-boundary`).textContent = 'N/A';
+        }
     }
 
     if (tabButtons.length > 0) {
