@@ -8,8 +8,9 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
 from models.simple_regression import SimpleLinearRegression, training_loop_slr
-from models.simple_classifier import SimpleClassifier, training_loop_classifier
 from models.mlp_regression import MLPRegression, training_loop_mlp
+from models.simple_classifier import SimpleClassifier, training_loop_classifier
+from models.mlp_classifier import MLPClassifier, training_loop_mlp_classifier
 
 app = FastAPI()
 
@@ -47,14 +48,27 @@ class TrainRequestClassifier(BaseModel):
     learning_rate: float
     epochs: int
 
+class TrainRequestMLPClassifier(BaseModel):
+    data: list[DataClassifier]
+    learning_rate: float
+    epochs: int
+    hidden_size: int
+
 class PredictRequestMLP(BaseModel):
     inputs: list[float]
+
+class PredictRequestClassifier(BaseModel):
+    inputs: list[list[float]]
 
 @app.get("/", response_class=HTMLResponse)
 async def root(request: Request):
     return templates.TemplateResponse(
         "index.html", {"request": request}
     )
+
+@app.get("/templates/{template_name}", response_class=HTMLResponse)
+async def get_template(request: Request, template_name: str):
+    return templates.TemplateResponse(f"{template_name}", {"request": request})
 
 @app.post("/train_simple_linear_regression")
 async def train_simple_linear_regression(request: TrainRequestLR):
@@ -155,6 +169,36 @@ async def train_simple_classifier(request: TrainRequestClassifier):
             status_code=500
         )
 
+@app.post("/train_mlp_classifier")
+async def train_mlp_classifier(request: TrainRequestMLPClassifier):
+    try:
+        x_data = torch.tensor([[i.x, i.y] for i in request.data], dtype=torch.float32)
+        y_data = torch.tensor([[i.label] for i in request.data], dtype=torch.float32)
+
+        model = MLPClassifier(input_f=2, hidden_size=request.hidden_size, output_f=1)
+        optimizer = optim.Adam(model.parameters(), lr=request.learning_rate)
+        criterion = nn.BCELoss()
+
+        final_loss = training_loop_mlp_classifier(
+            x_data, y_data,
+            model, optimizer, criterion,
+            request.epochs
+        )
+
+        models["mlp-classifier"] = model
+
+        return JSONResponse(
+            content={
+            "message": "MLP Classifier trained successfully",
+            "final_loss": final_loss},
+            status_code=200
+        )
+    except Exception as e:
+        return JSONResponse(
+            content={"error": str(e)},
+            status_code=500
+        )
+
 @app.post("/predict_mlp_regression")
 async def predict_mlp_regression_endpoint(request_body: PredictRequestMLP):
     try:
@@ -175,5 +219,29 @@ async def predict_mlp_regression_endpoint(request_body: PredictRequestMLP):
     except Exception as e:
         return JSONResponse(
             content={"error": + str(e)},
+            status_code=500
+        )
+
+@app.post("/predict_mlp_classifier")
+async def predict_mlp_classifier_endpoint(request_body: PredictRequestClassifier):
+    try:
+        model = models["mlp-classifier"]
+        if not isinstance(model, MLPClassifier):
+            raise ValueError("MLP Classifier model not yet trained or not loaded correctly.")
+
+        model.eval()
+        with torch.no_grad():
+            x_inputs = torch.tensor(request_body.inputs, dtype=torch.float32)
+            predictions = model(x_inputs).squeeze().tolist()
+            # Convert probabilities to classes
+            class_predictions = [1 if p > 0.5 else 0 for p in predictions]
+
+        return JSONResponse(
+            content={"predictions": class_predictions},
+            status_code=200
+        )
+    except Exception as e:
+        return JSONResponse(
+            content={"error": str(e)},
             status_code=500
         )
