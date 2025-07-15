@@ -5,13 +5,15 @@ document.addEventListener('DOMContentLoaded', () => {
     const modelStates = {
         'simple-linear-regression': { chart: null, data: [], defaultData: '1,2.5;2,4.1;3,5.8' },
         'simple-classifier': { chart: null, data: { class0: [], class1: [] }, defaultData: '1,2,0;3,4,1;5,1,0;6,3,1' },
-        'mlp-regression': { chart: null, data: [], defaultData: '1,1;2,3;3,2;4,4;5,3;6,5;7,4;8,6;9,5' }
+        'mlp-regression': { chart: null, data: [], defaultData: '1,1;2,3;3,2;4,4;5,3;6,5;7,4;8,6;9,5' },
+        'mlp-classifier': { chart: null, data: { class0: [], class1: [] }, defaultData: '1,2,0;3,4,1;5,1,0;6,3,1' }
     };
 
     const modelTemplates = {
         'simple-linear-regression': 'simple-linear-regression.html',
         'simple-classifier': 'simple-classifier.html',
-        'mlp-regression': 'mlp-regression.html'
+        'mlp-regression': 'mlp-regression.html',
+        'mlp-classifier': 'mlp-classifier.html'
     };
 
     function setupSliderValueDisplay(modelName, sliderIdSuffix) {
@@ -63,8 +65,9 @@ document.addEventListener('DOMContentLoaded', () => {
     async function handleTrain(modelName) {
         const dataInputElem = document.getElementById(`input-data-${modelName}`);
         let currentDataPoints;
+        let requestBody;
         try {
-            if (modelName === 'simple-classifier') {
+            if (modelName === 'simple-classifier' || modelName === 'mlp-classifier') {
                 const parsed = parseDataInput(dataInputElem.value, 'classifier');
                 modelStates[modelName].data.class0 = parsed.filter(p => p.label === 0);
                 modelStates[modelName].data.class1 = parsed.filter(p => p.label === 1);
@@ -84,17 +87,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const learningRate = parseFloat(document.getElementById(`slider-${modelName}-learning-rate`).value);
         const epochs = parseInt(document.getElementById(`slider-${modelName}-epochs`).value);
-        
-        let requestBody = {
+        requestBody = {
             data: currentDataPoints,
             learning_rate: learningRate,
             epochs: epochs
         };
 
-        if (modelName === 'mlp-regression') {
+        if (modelName === 'mlp-regression' || modelName === 'mlp-classifier') {
             requestBody.hidden_size = parseInt(document.getElementById(`slider-${modelName}-hidden-size`).value);
         }
-
+        
         try {
             const backendTrainEndpoint = `/train_${modelName.replace(/-/g, '_')}`; 
             const response = await fetch(backendTrainEndpoint, {
@@ -120,7 +122,54 @@ document.addEventListener('DOMContentLoaded', () => {
                 chart.data.datasets[0].data = currentDataPoints;
             }
 
-            if (modelName === 'simple-linear-regression') {
+            if (modelName === 'mlp-classifier') {
+                const chart = modelStates[modelName].chart;
+                if (!chart) return;
+
+                const parsed = parseDataInput(dataInputElem.value, 'classifier');
+                modelStates[modelName].data.class0 = parsed.filter(p => p.label === 0);
+                modelStates[modelName].data.class1 = parsed.filter(p => p.label === 1);
+                chart.data.datasets[0].data = modelStates[modelName].data.class0;
+                chart.data.datasets[1].data = modelStates[modelName].data.class1;
+
+                const gridPoints = [];
+                const xSteps = 50;
+                const ySteps = 50;
+                const xMin = chart.options.scales.x.min;
+                const xMax = chart.options.scales.x.max;
+                const yMin = chart.options.scales.y.min;
+                const yMax = chart.options.scales.y.max;
+                
+                for (let i = 0; i <= xSteps; i++) {
+                    for (let j = 0; j <= ySteps; j++) {
+                        const x = xMin + (i / xSteps) * (xMax - xMin);
+                        const y = yMin + (j / ySteps) * (yMax - yMin);
+                        gridPoints.push([x, y]);
+                    }
+                }
+
+                const predictResponse = await fetch('/predict_mlp_classifier', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ inputs: gridPoints })
+                });
+                const predictResult = await predictResponse.json();
+
+                if (predictResponse.status !== 200) {
+                    throw new Error(predictResult.detail || "Unknown prediction error from backend.");
+                }
+
+                const boundaryData = predictResult.predictions.map((p, index) => ({
+                    x: gridPoints[index][0],
+                    y: gridPoints[index][1],
+                    color: p === 1 ? 'rgba(0, 128, 0, 0.1)' : 'rgba(255, 0, 0, 0.1)'
+                }));
+                chart.data.datasets[2].data = boundaryData.filter(d => d.color === 'rgba(255, 0, 0, 0.1)');
+                chart.data.datasets[3].data = boundaryData.filter(d => d.color === 'rgba(0, 128, 0, 0.1)');
+                
+                chart.update();
+
+            } else if (modelName === 'simple-linear-regression') {
                 const w = result.weights[0];
                 const b = result.bias;
                 document.getElementById(`display-simple-linear-regression-weights`).textContent = `w=${w.toFixed(4)}, b=${b.toFixed(4)}`;
@@ -242,131 +291,154 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         try {
-            const response = await fetch(templateFile);
+            const response = await fetch(`/templates/${templateFile}`);
             if (!response.ok) {
                 throw new Error(`Failed to load ${templateFile}. Status: ${response.status}`);
             }
             const htmlContent = await response.text();
-
             modelContentArea.innerHTML = htmlContent;
+            setTimeout(() => {
+                
+                setupSliderValueDisplay(modelName, 'learning-rate');
+                setupSliderValueDisplay(modelName, 'epochs');
+                if (modelName === 'mlp-regression' || modelName === 'mlp-classifier' || modelName === 'kmeans') {
+                    setupSliderValueDisplay(modelName, 'hidden-size');
+                }
+
+                const dataInputElem = document.getElementById(`input-data-${modelName}`);
+                dataInputElem.value = modelStates[modelName].defaultData;
+
+                let chartData;
+                let chartOptions;
+
+                let xMin = 0, xMax = 10;
+                let yMin = 0, yMax = 10;
+                
+                const currentModelDefaultData = modelStates[modelName].defaultData;
+                const parsedDefaultData = parseDataInput(currentModelDefaultData, modelName.includes('classifier') ? 'classifier' : 'regression');
+                
+                if (parsedDefaultData.length > 0) {
+                    const allX = parsedDefaultData.map(p => p.x);
+                    const allY = parsedDefaultData.map(p => p.y);
+                    
+                    xMin = Math.min(...allX);
+                    xMax = Math.max(...allX);
+                    yMin = Math.min(...allY);
+                    yMax = Math.max(...allY);
+
+                    xMin = Math.floor(xMin) - 1;
+                    xMax = Math.ceil(xMax) + 1;
+                    yMin = Math.floor(yMin) - 1;
+                    yMax = Math.ceil(yMax) + 1;
+
+                    if (xMax <= xMin) xMax = xMin + 10;
+                    if (yMax <= yMin) yMax = yMin + 10;
+
+                    if (xMin > 0 && parsedDefaultData.every(p => p.x >= 0)) xMin = 0;
+                    if (yMin > 0 && parsedDefaultData.every(p => p.y >= 0)) yMin = 0;
+                }
+
+                if (modelName === 'simple-linear-regression') {
+                    const parsedData = parseDataInput(dataInputElem.value, 'regression');
+                    modelStates[modelName].data = parsedData;
+                    chartData = {
+                        datasets: [
+                            { label: 'Data Points', data: parsedData, backgroundColor: 'rgba(75, 192, 192, 0.6)', pointRadius: 6 },
+                            { label: 'Regression Line', data: [], borderColor: 'red', type: 'line', fill: false, pointRadius: 0, borderWidth: 2 }
+                        ]
+                    };
+                    chartOptions = { scales: { x: { type: 'linear', position: 'bottom', min: xMin, max: xMax }, y: { type: 'linear', position: 'left', min: yMin, max: yMax } } };
+                } else if (modelName === 'simple-classifier' || modelName === 'mlp-classifier') {
+                    const parsed = parseDataInput(dataInputElem.value, 'classifier');
+                    modelStates[modelName].data.class0 = parsed.filter(p => p.label === 0);
+                    modelStates[modelName].data.class1 = parsed.filter(p => p.label === 1);
+                    chartData = {
+                        datasets: [
+                            { label: 'Class 0', data: modelStates[modelName].data.class0, backgroundColor: 'red', pointRadius: 6 },
+                            { label: 'Class 1', data: modelStates[modelName].data.class1, backgroundColor: 'green', pointRadius: 6 }
+                        ]
+                    };
+                    if (modelName === 'simple-classifier') {
+                        chartData.datasets.push({ label: 'Decision Boundary', data: [], borderColor: 'purple', type: 'line', fill: false, pointRadius: 0, borderWidth: 2 });
+                    } else if (modelName === 'mlp-classifier') {
+                        chartData.datasets.push(
+                            { label: 'Boundary Class 0', data: [], backgroundColor: 'rgba(255, 0, 0, 0.1)', pointRadius: 2, showLine: false },
+                            { label: 'Boundary Class 1', data: [], backgroundColor: 'rgba(0, 128, 0, 0.1)', pointRadius: 2, showLine: false }
+                        );
+                    }
+                    chartOptions = { scales: { x: { type: 'linear', position: 'bottom', min: xMin, max: xMax }, y: { type: 'linear', position: 'left', min: yMin, max: yMax } } };
+                } else if (modelName === 'mlp-regression') {
+                    const parsedData = parseDataInput(dataInputElem.value, 'regression');
+                    modelStates[modelName].data = parsedData;
+                    chartData = {
+                        datasets: [
+                            { label: 'Data Points', data: parsedData, backgroundColor: 'rgba(75, 192, 192, 0.6)', pointRadius: 6 },
+                            { label: 'MLP Prediction', data: [], borderColor: 'blue', type: 'line', fill: false, pointRadius: 0, borderWidth: 2 }
+                        ]
+                    };
+                    chartOptions = { scales: { x: { type: 'linear', position: 'bottom', min: xMin, max: xMax }, y: { type: 'linear', position: 'left', min: yMin, max: yMax } } };
+                } else if (modelName === 'kmeans') {
+                    const parsedData = parseDataInput(dataInputElem.value, 'regression');
+                    modelStates[modelName].data = parsedData;
+                    chartData = {
+                        datasets: [
+                            { label: 'Data Points', data: parsedData, backgroundColor: 'rgba(75, 192, 192, 0.6)', pointRadius: 6 }
+                        ]
+                    };
+                    chartOptions = { scales: { x: { type: 'linear', position: 'bottom', min: xMin, max: xMax }, y: { type: 'linear', position: 'left', min: yMin, max: yMax } } };
+                }
+
+                renderChart(`chart-${modelName}`, 'scatter', chartData, chartOptions, modelName);
+
+                const trainButton = document.getElementById(`button-train-${modelName}`);
+                if (trainButton) trainButton.addEventListener('click', () => handleTrain(modelName));
+
+                const resetButton = document.getElementById(`button-reset-${modelName}`);
+                if (resetButton) resetButton.addEventListener('click', () => handleReset(modelName));
+
+                dataInputElem.addEventListener('input', () => {
+                    try {
+                        if (modelName === 'simple-classifier' || modelName === 'mlp-classifier') {
+                            const parsed = parseDataInput(dataInputElem.value, 'classifier');
+                            modelStates[modelName].data.class0 = parsed.filter(p => p.label === 0);
+                            modelStates[modelName].data.class1 = parsed.filter(p => p.label === 1);
+                            modelStates[modelName].chart.data.datasets[0].data = modelStates[modelName].data.class0;
+                            modelStates[modelName].chart.data.datasets[1].data = modelStates[modelName].data.class1;
+                        } else {
+                            modelStates[modelName].data = parseDataInput(dataInputElem.value, 'regression');
+                            modelStates[modelName].chart.data.datasets[0].data = modelStates[modelName].data;
+                        }
+                        if (modelStates[modelName].chart.data.datasets[1]) {
+                            modelStates[modelName].chart.data.datasets[1].data = [];
+                        }
+                        if (modelStates[modelName].chart.data.datasets[2]) {
+                            modelStates[modelName].chart.data.datasets[2].data = [];
+                        }
+                        if (modelStates[modelName].chart.data.datasets[3]) {
+                            modelStates[modelName].chart.data.datasets[3].data = [];
+                        }
+                        modelStates[modelName].chart.update();
+                    } catch (e) {
+                        console.warn(`Invalid data format for ${modelName}:`, e.message);
+                    }
+                });
+                
+                document.getElementById(`display-${modelName}-loss`).textContent = 'N/A';
+                const displayWeightsElem = document.getElementById(`display-${modelName}-weights`);
+                if (displayWeightsElem) {
+                    displayWeightsElem.textContent = 'N/A';
+                }
+                const displayBoundaryElem = document.getElementById(`display-${modelName}-boundary`);
+                if (displayBoundaryElem) {
+                    displayBoundaryElem.textContent = 'N/A';
+                }
+
+            }, 0);
 
         } catch (error) {
             console.error('Error fetching template:', error);
             modelContentArea.innerHTML = `<h2>Error loading template for ${modelName}.</h2>`;
             return; 
-        }
-
-        setupSliderValueDisplay(modelName, 'learning-rate');
-        setupSliderValueDisplay(modelName, 'epochs');
-        if (modelName === 'mlp-regression') {
-            setupSliderValueDisplay(modelName, 'hidden-size');
-        }
-
-        const dataInputElem = document.getElementById(`input-data-${modelName}`);
-        dataInputElem.value = modelStates[modelName].defaultData;
-
-        let chartData;
-        let chartOptions;
-
-        let xMin = 0, xMax = 10;
-        let yMin = 0, yMax = 10;
-        
-        const currentModelDefaultData = modelStates[modelName].defaultData;
-        const parsedDefaultData = parseDataInput(currentModelDefaultData, modelName === 'simple-classifier' ? 'classifier' : 'regression');
-        
-        if (parsedDefaultData.length > 0) {
-            const allX = parsedDefaultData.map(p => p.x);
-            const allY = parsedDefaultData.map(p => p.y);
-            
-            xMin = Math.min(...allX);
-            xMax = Math.max(...allX);
-            yMin = Math.min(...allY);
-            yMax = Math.max(...allY);
-
-            xMin = Math.floor(xMin) - 1;
-            xMax = Math.ceil(xMax) + 1;
-            yMin = Math.floor(yMin) - 1;
-            yMax = Math.ceil(yMax) + 1;
-
-            if (xMax <= xMin) xMax = xMin + 10;
-            if (yMax <= yMin) yMax = yMin + 10;
-        }
-        if (xMin > 0 && parsedDefaultData.every(p => p.x >= 0)) xMin = 0;
-        if (yMin > 0 && parsedDefaultData.every(p => p.y >= 0)) yMin = 0;
-        
-
-        if (modelName === 'simple-linear-regression') {
-            const parsedData = parseDataInput(dataInputElem.value, 'regression');
-            modelStates[modelName].data = parsedData;
-            chartData = {
-                datasets: [
-                    { label: 'Data Points', data: parsedData, backgroundColor: 'rgba(75, 192, 192, 0.6)', pointRadius: 6 },
-                    { label: 'Regression Line', data: [], borderColor: 'red', type: 'line', fill: false, pointRadius: 0, borderWidth: 2 }
-                ]
-            };
-            chartOptions = { scales: { x: { type: 'linear', position: 'bottom', min: xMin, max: xMax }, y: { type: 'linear', position: 'left', min: yMin, max: yMax } } };
-        } else if (modelName === 'simple-classifier') {
-            const parsed = parseDataInput(dataInputElem.value, 'classifier');
-            modelStates[modelName].data.class0 = parsed.filter(p => p.label === 0);
-            modelStates[modelName].data.class1 = parsed.filter(p => p.label === 1);
-            chartData = {
-                datasets: [
-                    { label: 'Class 0', data: modelStates[modelName].data.class0, backgroundColor: 'red', pointRadius: 6 },
-                    { label: 'Class 1', data: modelStates[modelName].data.class1, backgroundColor: 'green', pointRadius: 6 },
-                    { label: 'Decision Boundary', data: [], borderColor: 'purple', type: 'line', fill: false, pointRadius: 0, borderWidth: 2 }
-                ]
-            };
-            chartOptions = { scales: { x: { type: 'linear', position: 'bottom', min: xMin, max: xMax }, y: { type: 'linear', position: 'left', min: yMin, max: yMax } } };
-        } else if (modelName === 'mlp-regression') {
-            const parsedData = parseDataInput(dataInputElem.value, 'regression');
-            modelStates[modelName].data = parsedData;
-            chartData = {
-                datasets: [
-                    { label: 'Data Points', data: parsedData, backgroundColor: 'rgba(75, 192, 192, 0.6)', pointRadius: 6 },
-                    { label: 'MLP Prediction', data: [], borderColor: 'blue', type: 'line', fill: false, pointRadius: 0, borderWidth: 2 }
-                ]
-            };
-            chartOptions = { scales: { x: { type: 'linear', position: 'bottom', min: xMin, max: xMax }, y: { type: 'linear', position: 'left', min: yMin, max: yMax } } };
-        }
-
-        renderChart(`chart-${modelName}`, 'scatter', chartData, chartOptions, modelName);
-
-        const trainButton = document.getElementById(`button-train-${modelName}`);
-        if (trainButton) trainButton.addEventListener('click', () => handleTrain(modelName));
-
-        const resetButton = document.getElementById(`button-reset-${modelName}`);
-        if (resetButton) resetButton.addEventListener('click', () => handleReset(modelName));
-
-        dataInputElem.addEventListener('input', () => {
-            try {
-                if (modelName === 'simple-classifier') {
-                    const parsed = parseDataInput(dataInputElem.value, 'classifier');
-                    modelStates[modelName].data.class0 = parsed.filter(p => p.label === 0);
-                    modelStates[modelName].data.class1 = parsed.filter(p => p.label === 1);
-                    modelStates[modelName].chart.data.datasets[0].data = modelStates[modelName].data.class0;
-                    modelStates[modelName].chart.data.datasets[1].data = modelStates[modelName].data.class1;
-                } else {
-                    modelStates[modelName].data = parseDataInput(dataInputElem.value, 'regression');
-                    modelStates[modelName].chart.data.datasets[0].data = modelStates[modelName].data;
-                }
-                if (modelStates[modelName].chart.data.datasets[1]) {
-                    modelStates[modelName].chart.data.datasets[1].data = [];
-                }
-                if (modelStates[modelName].chart.data.datasets[2]) {
-                    modelStates[modelName].chart.data.datasets[2].data = [];
-                }
-                modelStates[modelName].chart.update();
-            } catch (e) {
-                console.warn(`Invalid data format for ${modelName}:`, e.message);
-            }
-        });
-
-        document.getElementById(`display-${modelName}-loss`).textContent = 'N/A';
-        if (document.getElementById(`display-${modelName}-weights`)) {
-            document.getElementById(`display-${modelName}-weights`).textContent = 'N/A';
-        }
-        if (document.getElementById(`display-${modelName}-boundary`)) {
-            document.getElementById(`display-${modelName}-boundary`).textContent = 'N/A';
         }
     }
 
